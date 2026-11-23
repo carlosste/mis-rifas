@@ -1,0 +1,1037 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mis Rifas</title>
+<meta name="theme-color" content="#0F6B5A">
+<meta name="description" content="Lleva el registro de tus rifas, compradores y abonos.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mis Rifas">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: una columna tipo app móvil (máx 640px), encabezado fijo, hojas inferiores para editar, tarjetas con forma de boleta */
+:root{
+  --bg:#EEF2EF; --surface:#FFFFFF; --surface-2:#F6F8F6; --ink:#15201C; --muted:#5B6A63; --line:#D8E0DB;
+  --accent:#0F6B5A; --accent-ink:#FFFFFF; --stub:#E3A63A; --stub-ink:#2A1C02;
+  --ok:#1E8A4B; --warn:#B86A0F; --danger:#B3261E;
+  --ok-bg:#DCF1E3; --warn-bg:#FBEBD3; --free-bg:#FFFFFF;
+  --shadow:0 1px 2px rgba(20,40,30,.06),0 4px 14px rgba(20,40,30,.06);
+  --f-display:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --f-mono:ui-monospace,"SF Mono","Roboto Mono","Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1412; --surface:#16201D; --surface-2:#1B2723; --ink:#E5EEE9; --muted:#93A49C; --line:#27342F;
+  --accent:#40BF9E; --accent-ink:#04241C; --stub:#E8B654; --stub-ink:#2A1C02;
+  --ok:#55C985; --warn:#E6A24A; --danger:#F08A80;
+  --ok-bg:#163322; --warn-bg:#3A2A12; --free-bg:#16201D;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0D1412; --surface:#16201D; --surface-2:#1B2723; --ink:#E5EEE9; --muted:#93A49C; --line:#27342F;
+  --accent:#40BF9E; --accent-ink:#04241C; --stub:#E8B654; --stub-ink:#2A1C02;
+  --ok:#55C985; --warn:#E6A24A; --danger:#F08A80;
+  --ok-bg:#163322; --warn-bg:#3A2A12; --free-bg:#16201D;
+  --shadow:0 1px 2px rgba(0,0,0,.3); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--accent)}
+.app{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 120px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* Encabezado */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--accent);color:var(--accent-ink);
+  margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 0;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:center;gap:10px;min-height:58px}
+.top h1{font-size:20px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .icon{color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent-ink) 30%,transparent)}
+.icon{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:transparent;display:grid;place-items:center;font-size:20px;line-height:1;flex:none}
+.top .pillbtn{background:color-mix(in srgb,var(--accent-ink) 14%,transparent);color:var(--accent-ink);border:0;border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
+
+/* Hero resumen */
+.hero{background:var(--accent);color:var(--accent-ink);margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:4px max(16px,env(safe-area-inset-right,0px)) 22px max(16px,env(safe-area-inset-left,0px));border-radius:0 0 22px 22px}
+.hero .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;opacity:.8}
+.hero .big{font-family:var(--f-display);font-size:40px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:2px}
+.hero .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
+.hero .row div{min-width:0}
+.hero .row b{display:block;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .row span{font-size:12px;opacity:.8}
+.bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--accent-ink) 20%,transparent);overflow:hidden;margin-top:14px}
+.bar i{display:block;height:100%;background:var(--stub);border-radius:99px}
+.bar.light{background:var(--line)}
+.bar.light i{background:var(--accent)}
+
+/* Botones */
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 16px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.stub{background:var(--stub);border-color:var(--stub);color:var(--stub-ink)}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,var(--line))}
+.btn.danger[data-armed]{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn.ghost{background:transparent}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+
+/* Tarjetas tipo boleta */
+.section-t{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 2px 10px;font-weight:600}
+.ticket{display:grid;grid-template-columns:minmax(0,1fr) 92px;background:var(--surface);border-radius:16px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;border:0;padding:0;text-align:left;width:100%;position:relative}
+.ticket .main{padding:14px 16px;min-width:0}
+.ticket .main h3{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ticket .meta{color:var(--muted);font-size:13px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ticket .stubp{background:var(--stub);color:var(--stub-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;position:relative;
+  border-left:2px dashed color-mix(in srgb,var(--stub-ink) 25%,transparent)}
+.ticket .stubp::before,.ticket .stubp::after{content:"";position:absolute;left:-10px;width:18px;height:18px;border-radius:50%;background:var(--bg)}
+.ticket .stubp::before{top:-9px}.ticket .stubp::after{bottom:-9px}
+.ticket .stubp b{font-family:var(--f-display);font-size:24px;font-weight:800;line-height:1}
+.ticket .stubp span{font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.ticket .money{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-top:10px;flex-wrap:wrap}
+.ticket .money .pend{color:var(--warn);font-weight:600}
+
+/* Resumen de una rifa */
+.sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.sum div{min-width:0}
+.sum b{display:block;font-size:17px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum span{font-size:12px;opacity:.8}
+.subline{font-size:13px;opacity:.85;margin-top:10px;display:flex;flex-wrap:wrap;gap:4px 14px}
+
+.tabs{display:flex;gap:4px;background:var(--surface);border-radius:14px;padding:4px;margin:14px 0 12px;box-shadow:var(--shadow);overflow-x:auto}
+.tabs button{flex:1;border:0;background:transparent;border-radius:10px;padding:9px 6px;font-weight:600;font-size:14px;color:var(--muted);white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.search{display:flex;gap:8px;margin-bottom:10px}
+.search input{flex:1;min-width:0}
+input,select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px;min-height:44px}
+input::placeholder{color:var(--muted);opacity:.8}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;white-space:nowrap;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+
+/* Cuadrícula de números */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px}
+.cell{border:1px solid var(--line);background:var(--free-bg);border-radius:10px;padding:8px 4px 6px;text-align:center;min-width:0;position:relative}
+.cell b{display:block;font-family:var(--f-mono);font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.cell small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell.debe{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.cell.debe small{color:var(--warn)}
+.cell.pagado{background:var(--ok-bg);border-color:color-mix(in srgb,var(--ok) 45%,transparent)}
+.cell.pagado small{color:var(--ok)}
+.cell .tag{position:absolute;top:4px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--stub)}
+.cell.sel{outline:3px solid var(--accent);outline-offset:-1px}
+.cell .fx,.fx-l{font-size:9px;font-weight:800;color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:1px 3px;line-height:1.2}
+.cell .fx{position:absolute;top:3px;left:4px}
+.fx-l{margin-right:5px;vertical-align:1px}
+.ciclo{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:12px 14px;margin-top:14px;box-shadow:var(--shadow)}
+.ciclo .grow{flex:1;min-width:0}
+.ciclo b{font-family:var(--f-display);font-size:18px}
+.ciclo .btn{min-height:40px;padding:8px 12px;flex:none}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:12px 2px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;border:1px solid var(--line)}
+
+/* Listas */
+.list{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.li{display:flex;gap:12px;align-items:center;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;width:100%;text-align:left}
+.li:last-child{border-bottom:0}
+.li .grow{flex:1;min-width:0}
+.li .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .s{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .r{text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.li .r .s{text-align:right}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--accent);flex:none}
+.day{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:10px 14px 6px;background:var(--surface-2);display:flex;justify-content:space-between}
+
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill.libre{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill.debe{background:var(--warn-bg);color:var(--warn)}
+.pill.pagado{background:var(--ok-bg);color:var(--ok)}
+.warn-t{color:var(--warn)} .ok-t{color:var(--ok)} .muted{color:var(--muted)}
+
+.empty{background:var(--surface);border-radius:18px;padding:26px 20px;text-align:center;box-shadow:var(--shadow);margin-top:18px}
+.empty h2{font-size:22px;margin-bottom:6px}
+.empty p{color:var(--muted);margin:0 auto 16px;max-width:36ch}
+.empty .stack{display:grid;gap:10px;max-width:320px;margin:0 auto}
+.note{font-size:13px;color:var(--muted);text-align:center;margin:18px 0}
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px;margin-top:12px}
+
+/* Formularios */
+.form{display:grid;gap:12px}
+.form label{display:grid;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+.form label input,.form label select{color:var(--ink);font-weight:400;font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two>*{min-width:0}
+.hint{font-size:12px;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:16px;margin-bottom:12px}
+.card h3{font-size:17px;margin-bottom:10px}
+.check{display:flex!important;grid-template-columns:none!important;align-items:center;gap:10px!important;font-weight:500!important;color:var(--ink)!important}
+.check input{width:20px;height:20px;min-height:0;flex:none}
+
+/* Hoja inferior */
+.scrim{position:fixed;inset:0;background:rgba(5,15,12,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:640px;max-height:92%;overflow:auto;border-radius:20px 20px 0 0;
+  padding:8px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:up .22s ease-out}
+.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 10px}
+.sh-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sh-head .grow{flex:1;min-width:0}
+.sh-head h2{font-size:22px}
+.eyebrow{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.stats3 div{background:var(--surface);border-radius:12px;padding:10px;min-width:0}
+.stats3 span{display:block;font-size:12px;color:var(--muted)}
+.stats3 b{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.numchips{display:flex;flex-wrap:wrap;gap:6px}
+.numchip{font-family:var(--f-mono);font-weight:700;font-size:14px;border-radius:8px;padding:5px 9px;border:1px solid var(--line);background:var(--surface)}
+.numchip.debe{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+.numchip.pagado{background:var(--ok-bg);color:var(--ok);border-color:transparent}
+.tablewrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;background:var(--surface-2)}
+.xdel{border:0;background:transparent;color:var(--muted);font-size:13px;padding:6px 8px;border-radius:8px}
+.xdel[data-armed]{background:var(--danger);color:#fff}
+
+/* Barra de selección */
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--ink);color:var(--bg);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.selbar .in{max-width:640px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.selbar .in span{flex:1;font-weight:600}
+.selbar .btn{min-height:40px;padding:8px 14px}
+.selbar .btn.ghost{color:var(--bg);border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;z-index:60;font-size:14px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+.loading{text-align:center;color:var(--muted);padding:60px 0}
+@keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.sheet{animation:none}}
+@media (max-width:380px){.hero .big{font-size:34px}.grid{grid-template-columns:repeat(auto-fill,minmax(60px,1fr))}}
+</style>
+</head>
+<body>
+<div class="app" id="app"><div class="loading">Cargando tus rifas…</div></div>
+<div id="sheet-root"></div>
+<div id="selbar-root"></div>
+<datalist id="dl-p"></datalist>
+
+<script src="xlsx.full.min.js"></script>
+<script>
+"use strict";
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtNum = n => Math.round(Number(n) || 0).toLocaleString("es-CO");
+const fmt = n => "$" + fmtNum(n);
+const pad2 = n => String(n).padStart(2, "0");
+const hoy = () => { const d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()); };
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const fmtFecha = s => { if (!s) return ""; const [y,m,d] = String(s).split("-"); if (!d) return s; return (+d) + " " + MESES[(+m) - 1] + " " + y; };
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const norm = s => String(s || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ");
+const clone = o => JSON.parse(JSON.stringify(o));
+function parseMoney(v) {
+  if (typeof v === "number") return isFinite(v) ? v : NaN;
+  let s = String(v ?? "").replace(/[^\d.,-]/g, "");
+  if (!s) return NaN;
+  if (/^-?\d{1,3}([.,]\d{3})+$/.test(s)) return Number(s.replace(/[.,]/g, ""));
+  if (s.includes(",") && s.includes(".")) s = s.replace(/[.,](?=\d{3}(\D|$))/g, "");
+  return Number(s.replace(",", "."));
+}
+function sortLista(arr) {
+  const allNum = arr.every(x => /^\d+$/.test(x));
+  return allNum ? arr.sort((a, b) => (+a) - (+b) || a.length - b.length)
+                : arr.sort((a, b) => a.localeCompare(b, "es", {numeric: true}));
+}
+function toast(msg) {
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2800);
+}
+async function copiar(texto, fallbackEl) {
+  try { await navigator.clipboard.writeText(texto); toast("Copiado"); }
+  catch (e) { if (fallbackEl) { fallbackEl.hidden = false; fallbackEl.value = texto; fallbackEl.focus(); fallbackEl.select(); toast("Selecciona y copia el texto"); } }
+}
+
+/* ---------- estado ---------- */
+const S = { rifas: {}, view: "home", rifaId: null, tab: "numeros", filtro: "todos", q: "", qp: "", sel: null, loading: true, note: "", mode: "local" };
+const cur = () => S.rifas[S.rifaId];
+
+/* ---------- almacenamiento: todo queda guardado en este teléfono ---------- */
+const LKEY = "mis-rifas-v1";
+const Store = {
+  init() {
+    try { S.rifas = JSON.parse(localStorage.getItem(LKEY) || "{}") || {}; Object.values(S.rifas).forEach(normalizar); }
+    catch (e) { S.rifas = {}; S.note = "Este navegador no deja guardar datos (¿modo incógnito?). Lo que registres se perderá al cerrar."; }
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+    S.loading = false; render();
+  },
+  write() {
+    try { localStorage.setItem(LKEY, JSON.stringify(S.rifas)); localStorage.setItem(LKEY + "-cambios", String(Date.now())); }
+    catch (e) { toast("No se pudo guardar en este teléfono. Descarga una copia de seguridad."); }
+  },
+  save(r) { r.act = Date.now(); S.rifas[r.id] = r; this.write(); },
+  remove(id) { delete S.rifas[id]; this.write(); }
+};
+
+/* ---------- archivos: descargar y respaldar ---------- */
+function descargar(nombre, data, tipo) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: tipo });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+const nombreArchivo = s => (String(s).replace(/[\\/:*?"<>|]/g, "").trim() || "rifa");
+function descargarRespaldo() {
+  const data = JSON.stringify({ app: "mis-rifas", version: 1, fecha: new Date().toISOString(), rifas: S.rifas });
+  descargar(`Respaldo Mis Rifas ${hoy()}.json`, data, "application/json");
+  try { localStorage.setItem(LKEY + "-respaldo", String(Date.now())); } catch (e) {}
+  toast("Copia de seguridad descargada"); render();
+}
+async function restaurarRespaldo(file) {
+  try {
+    const d = JSON.parse(await file.text());
+    const rifas = d && d.rifas && typeof d.rifas === "object" ? d.rifas : null;
+    if (!rifas) throw 0;
+    let n = 0;
+    for (const [id, r] of Object.entries(rifas)) { if (r && Array.isArray(r.lista) && r.nums) { S.rifas[id] = normalizar(r); n++; } }
+    if (!n) throw 0;
+    Store.write(); closeSheet(); S.view = "home"; render(); toast(`Se restauraron ${n} ${n === 1 ? "rifa" : "rifas"}`);
+  } catch (e) { toast("Ese archivo no es una copia de seguridad de Mis Rifas"); }
+}
+function diasSinRespaldo() {
+  try {
+    const cambios = +localStorage.getItem(LKEY + "-cambios") || 0, resp = +localStorage.getItem(LKEY + "-respaldo") || 0;
+    if (!cambios || resp >= cambios) return 0;
+    return Math.floor((Date.now() - (resp || cambios)) / 86400000);
+  } catch (e) { return 0; }
+}
+function shRespaldo() {
+  return head("Tus datos", "Copia de seguridad") + `<p class="muted" style="margin-top:0">Tus rifas se guardan solo en este teléfono. Si se borra el navegador, cambias de celular o lo pierdes, solo las recuperas con una copia de seguridad.</p>
+    <div class="form">
+      <button class="btn primary" data-a="respaldo-bajar">Descargar copia de seguridad</button>
+      <span class="hint">Guarda el archivo en Google Drive, en tu correo o envíatelo por WhatsApp.</span>
+      <label class="btn" for="respaldo-file" style="cursor:pointer">Restaurar desde una copia</label>
+      <input id="respaldo-file" type="file" accept=".json,application/json" hidden>
+      <span class="hint">Restaurar agrega las rifas del archivo y reemplaza las que tengan el mismo origen.</span>
+    </div>`;
+}
+
+/* ---------- cálculos ---------- */
+const precioDe = (r, k) => { const n = r.nums[k]; return n && n.pr != null ? n.pr : r.precio; };
+const pagadoDe = n => (n && n.ab ? n.ab : []).reduce((s, a) => s + (Number(a.m) || 0), 0);
+function estado(r, k) { const n = r.nums[k]; if (!n || !n.p) return "libre"; return pagadoDe(n) >= precioDe(r, k) ? "pagado" : "debe"; }
+function resumen(r) {
+  let vend = 0, esp = 0, rec = 0, pag = 0, libres = 0, pend = 0, fijos = 0;
+  for (const k of r.lista) {
+    const n = r.nums[k];
+    if (n && n.p) { vend++; if (n.fijo) fijos++; const p = precioDe(r, k), g = pagadoDe(n); esp += p; rec += g; pend += Math.max(0, p - g); if (g >= p) pag++; }
+    else libres++;
+  }
+  const pendAnt = (r.historial || []).reduce((s, h) => s + totalesCiclo(h).pend, 0);
+  return { total: r.lista.length, vend, libres, pag, debe: vend - pag, esp, rec, pend, pendAnt, fijos, pot: esp + libres * r.precio };
+}
+function personas(r) {
+  const m = new Map();
+  for (const k of r.lista) {
+    const n = r.nums[k]; if (!n || !n.p) continue;
+    const key = norm(n.p);
+    if (!m.has(key)) m.set(key, { key, nombre: n.p.trim(), tel: "", nums: [], total: 0, pagado: 0 });
+    const o = m.get(key); o.nums.push(k); o.total += precioDe(r, k); o.pagado += pagadoDe(n); if (!o.tel && n.t) o.tel = n.t;
+  }
+  return [...m.values()].sort((a, b) => (b.total - b.pagado) - (a.total - a.pagado) || a.nombre.localeCompare(b.nombre, "es"));
+}
+function repartirAbono(r, keys, monto, fecha, nota) {
+  let rest = monto;
+  for (const k of keys) {
+    if (rest <= 0) break;
+    const n = r.nums[k]; const debe = precioDe(r, k) - pagadoDe(n);
+    if (debe <= 0) continue;
+    const m = Math.min(debe, rest); (n.ab = n.ab || []).push({ m, f: fecha, n: nota || "" }); rest -= m;
+  }
+  if (rest > 0 && keys.length) {
+    const n = r.nums[keys[keys.length - 1]];
+    (n.ab = n.ab || []).push({ m: rest, f: fecha, n: (nota ? nota + " · " : "") + "pago de más" });
+  }
+}
+function nombresConocidos() {
+  const set = new Map();
+  for (const r of Object.values(S.rifas)) for (const n of Object.values(r.nums || {})) if (n && n.p) { const k = norm(n.p); if (!set.has(k)) set.set(k, { p: n.p.trim(), t: n.t || "" }); else if (!set.get(k).t && n.t) set.get(k).t = n.t; }
+  return set;
+}
+function actualizarDatalist() {
+  $("#dl-p").innerHTML = [...nombresConocidos().values()].map(o => `<option value="${esc(o.p)}"></option>`).join("");
+}
+function rango(desde, hasta) {
+  const a = parseInt(desde, 10), b = parseInt(hasta, 10);
+  if (!isFinite(a) || !isFinite(b) || b < a) return null;
+  if (b - a > 9999) return null;
+  const w = Math.max(String(desde).trim().length, String(hasta).trim().length);
+  const out = []; for (let i = a; i <= b; i++) out.push(String(i).padStart(w, "0")); return out;
+}
+function nuevaRifa(datos) {
+  return { id: newId(), nombre: datos.nombre || "Rifa sin nombre", premio: datos.premio || "", fecha: datos.fecha || "", precio: datos.precio || 0, lista: datos.lista || [], nums: datos.nums || {},
+    frecuencia: datos.frecuencia || "semanal", ciclo: { n: 1, inicio: hoy() }, historial: [], creada: Date.now(), act: Date.now() };
+}
+/* ---------- ciclos (semana, quincena, mes) ---------- */
+const FREC = {
+  semanal: { label: "Semanal", nombre: "Semana", dias: 7 },
+  quincenal: { label: "Cada 15 días", nombre: "Quincena", dias: 14 },
+  mensual: { label: "Mensual", nombre: "Mes", meses: 1 },
+  unica: { label: "Una sola vez", nombre: "Sorteo", dias: 0 }
+};
+const frec = r => FREC[r.frecuencia] || FREC.semanal;
+const frecOpts = sel => Object.entries(FREC).map(([k, v]) => `<option value="${k}" ${k === sel ? "selected" : ""}>${v.label}</option>`).join("");
+const nombreCiclo = (r, n) => frec(r).nombre + " " + (n ?? r.ciclo.n);
+function normalizar(r) {
+  if (!r.frecuencia) r.frecuencia = "semanal";
+  if (!r.ciclo) r.ciclo = { n: 1, inicio: r.creada ? new Date(r.creada).toISOString().slice(0, 10) : hoy() };
+  if (!Array.isArray(r.historial)) r.historial = [];
+  if (!r.nums) r.nums = {};
+  if (!Array.isArray(r.lista)) r.lista = [];
+  return r;
+}
+function sumarCiclo(fecha, r) {
+  const f = frec(r); const base = fecha ? new Date(fecha + "T12:00:00") : new Date();
+  if (f.meses) base.setMonth(base.getMonth() + f.meses); else base.setDate(base.getDate() + (f.dias || 7));
+  return base.getFullYear() + "-" + pad2(base.getMonth() + 1) + "-" + pad2(base.getDate());
+}
+function totalesCiclo(h) {
+  let esp = 0, rec = 0, pend = 0, deudores = 0;
+  for (const n of Object.values(h.nums || {})) { const pg = pagadoDe(n); esp += n.pr; rec += pg; const d = Math.max(0, n.pr - pg); pend += d; if (d) deudores++; }
+  return { esp, rec, pend, deudores, vend: Object.keys(h.nums || {}).length };
+}
+function cerrarCiclo(r, ganador, proxFecha) {
+  const snap = {};
+  for (const k of r.lista) { const n = r.nums[k]; if (n && n.p) { snap[k] = clone(n); snap[k].pr = precioDe(r, k); } }
+  r.historial.unshift({ n: r.ciclo.n, inicio: r.ciclo.inicio, fecha: r.fecha || "", cierre: hoy(), ganador: ganador || "", ganadorP: ganador && r.nums[ganador] ? r.nums[ganador].p || "" : "", nums: snap });
+  const quedan = {};
+  for (const k of r.lista) { const n = r.nums[k]; if (n && n.p && n.fijo) quedan[k] = { p: n.p, t: n.t || "", pr: n.pr ?? null, nt: n.nt || "", fijo: true, ab: [] }; }
+  r.nums = quedan; r.ciclo = { n: r.ciclo.n + 1, inicio: hoy() }; r.fecha = proxFecha || "";
+}
+function deudaAnterior(r, key) {
+  let d = 0;
+  for (const h of r.historial) for (const n of Object.values(h.nums)) if (norm(n.p) === key) d += Math.max(0, n.pr - pagadoDe(n));
+  return d;
+}
+
+/* ---------- render principal ---------- */
+function render() {
+  const a = document.activeElement; const fid = a && a.id; const ss = a && a.selectionStart, se = a && a.selectionEnd;
+  const app = $("#app");
+  if (S.loading) { app.innerHTML = `<div class="top"><h1>Mis rifas</h1></div><div class="loading">Cargando tus rifas…</div>`; return; }
+  if (S.view === "rifa" && !cur()) { S.view = "home"; S.sel = null; }
+  app.innerHTML = S.view === "rifa" ? vRifa() : vHome();
+  renderSelbar();
+  actualizarDatalist();
+  if (fid) { const el = document.getElementById(fid); if (el && el !== document.activeElement && !el.closest("#sheet-root")) { el.focus(); try { el.setSelectionRange(ss, se); } catch (e) {} } }
+}
+
+function vHome() {
+  const rifas = Object.values(S.rifas).sort((a, b) => (b.act || 0) - (a.act || 0));
+  let esp = 0, rec = 0, pend = 0, pendAnt = 0;
+  rifas.forEach(r => { const s = resumen(r); esp += s.esp; rec += s.rec; pend += s.pend; pendAnt += s.pendAnt; });
+  const pct = esp ? Math.min(100, rec / esp * 100) : 0;
+  let h = `<div class="top"><h1>Mis rifas</h1></div>`;
+  h += `<div class="hero">
+    <div class="lbl">Te falta recaudar</div>
+    <div class="big">${fmt(pend + pendAnt)}</div>
+    <div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div>
+    <div class="row">
+      <div><b>${fmt(rec)}</b><span>Recaudado del sorteo actual</span></div>
+      <div><b>${fmt(esp)}</b><span>Vendido en el sorteo actual</span></div>
+      <div><b>${fmt(pendAnt)}</b><span>Deben de sorteos pasados</span></div>
+    </div></div>`;
+  if (S.note) h += `<div class="banner">${esc(S.note)}</div>`;
+  const dias = rifas.length ? diasSinRespaldo() : 0;
+  if (dias >= 3) h += `<div class="banner" style="display:flex;gap:10px;align-items:center;justify-content:space-between"><span>Llevas ${dias} días sin copia de seguridad.</span><button class="btn" data-a="respaldo-bajar" style="min-height:36px;padding:6px 12px">Hacer copia</button></div>`;
+  if (!rifas.length) {
+    h += `<div class="empty"><h2>Crea tu primera rifa</h2>
+      <p>Arma la numeración con un rango (00 al 99, 000 al 999) o sube el Excel donde ya tienes tus números y compradores.</p>
+      <div class="stack">
+        <button class="btn primary" data-a="nueva">Nueva rifa</button>
+        <button class="btn" data-a="importar">Subir Excel de numeración</button>
+        <button class="btn" data-a="respaldo">Restaurar una copia de seguridad</button>
+        <button class="btn ghost" data-a="ejemplo">Ver una rifa de ejemplo</button>
+      </div></div>`;
+  } else {
+    h += `<div class="actions"><button class="btn primary" data-a="nueva">+ Nueva rifa</button><button class="btn" data-a="importar">Subir Excel</button></div>`;
+    h += `<div class="section-t">${rifas.length} ${rifas.length === 1 ? "rifa" : "rifas"}</div>`;
+    for (const r of rifas) {
+      const s = resumen(r); const p = s.esp ? Math.min(100, s.rec / s.esp * 100) : 0;
+      const meta = [r.frecuencia !== "unica" ? nombreCiclo(r) : "", r.premio, r.fecha ? "Sorteo " + fmtFecha(r.fecha) : ""].filter(Boolean).join(" · ") || `Precio ${fmt(r.precio)}`;
+      const totPend = s.pend + s.pendAnt;
+      h += `<button class="ticket" data-a="abrir" data-id="${esc(r.id)}">
+        <div class="main"><h3>${esc(r.nombre)}</h3><div class="meta">${esc(meta)}</div>
+          <div class="bar light"><i style="width:${p.toFixed(1)}%"></i></div>
+          <div class="money"><span>${fmt(s.rec)} de ${fmt(s.esp)}</span><span class="pend">${totPend ? "Faltan " + fmt(totPend) : "Al día"}</span></div></div>
+        <div class="stubp"><b class="num">${s.vend}</b><span>de ${s.total}</span><span>vendidos</span></div>
+      </button>`;
+    }
+  }
+  h += `<p class="note">Tus rifas se guardan solo en este teléfono y funcionan sin internet.<br><button class="btn ghost" data-a="respaldo" style="margin-top:8px">Copia de seguridad</button></p>`;
+  return h;
+}
+
+function vRifa() {
+  const r = cur(); const s = resumen(r); const pct = s.esp ? Math.min(100, s.rec / s.esp * 100) : 0;
+  let h = `<div class="top"><button class="icon" data-a="home" aria-label="Volver">‹</button><h1>${esc(r.nombre)}</h1><button class="pillbtn" data-a="exportar">Excel</button></div>`;
+  h += `<div class="hero">
+    <div class="lbl">Falta por recaudar</div>
+    <div class="big">${fmt(s.pend)}</div>
+    <div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div>
+    <div class="sum">
+      <div><b>${fmt(s.rec)}</b><span>Recaudado</span></div>
+      <div><b>${fmt(s.esp)}</b><span>Total vendido</span></div>
+      <div><b>${fmt(s.pot)}</b><span>Si vendes todo</span></div>
+    </div>
+    <div class="subline"><span>${s.vend}/${s.total} vendidos</span><span>${s.pag} pagados</span><span>${s.debe} con saldo</span><span>${s.libres} libres</span><span>${s.fijos} fijos</span><span>Precio base ${fmt(r.precio)}</span></div>
+    ${s.pendAnt ? `<div class="subline"><b>Además deben ${fmt(s.pendAnt)} de sorteos pasados</b></div>` : ""}
+  </div>`;
+  if (r.frecuencia !== "unica" || r.historial.length) {
+    h += `<div class="ciclo"><div class="grow"><div class="eyebrow">${esc(frec(r).label)}</div><b>${esc(nombreCiclo(r))}</b>
+      <span class="muted"> · ${r.fecha ? "sorteo " + esc(fmtFecha(r.fecha)) : "sin fecha de sorteo"}</span></div>
+      <button class="btn stub" data-a="cerrar">Cerrar ${esc(frec(r).nombre.toLowerCase())}</button></div>`;
+  }
+  const tabs = [["numeros", "Números"], ["personas", "Personas"], ["abonos", "Abonos"], ["historial", "Historial"], ["ajustes", "Ajustes"]];
+  h += `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${S.tab === k}" data-a="tab" data-t="${k}">${l}</button>`).join("")}</div>`;
+  if (S.tab === "numeros") h += tNumeros(r, s);
+  else if (S.tab === "personas") h += tPersonas(r);
+  else if (S.tab === "abonos") h += tAbonos(r);
+  else if (S.tab === "historial") h += tHistorial(r);
+  else h += tAjustes(r);
+  return h;
+}
+
+function tNumeros(r, s) {
+  const f = [["todos", "Todos", s.total, ""], ["libre", "Libres", s.libres, "var(--line)"], ["debe", "Con saldo", s.debe, "var(--warn)"], ["pagado", "Pagados", s.pag, "var(--ok)"], ["fijo", "Fijos", s.fijos, "var(--accent)"]];
+  let h = `<div class="search"><input id="q-n" type="search" placeholder="Buscar número o persona" value="${esc(S.q)}" autocomplete="off">
+    <button class="btn ${S.sel ? "primary" : ""}" data-a="sel-toggle">${S.sel ? "Listo" : "Elegir varios"}</button></div>`;
+  h += `<div class="chips">${f.map(([k, l, n, c]) => `<button class="chip" aria-pressed="${S.filtro === k}" data-a="filtro" data-f="${k}">${c ? `<span class="dot" style="background:${c}"></span>` : ""}${l} ${n}</button>`).join("")}</div>`;
+  if (!r.lista.length) return h + `<div class="empty"><h2>Esta rifa no tiene números</h2><p>Agrega un rango o sube un Excel desde Ajustes.</p><button class="btn primary" data-a="tab" data-t="ajustes">Ir a Ajustes</button></div>`;
+  h += `<div class="grid" id="grid">${gridHtml(r)}</div>`;
+  h += `<div class="legend"><span><i style="background:var(--free-bg)"></i>Libre</span><span><i style="background:var(--warn-bg)"></i>Con saldo</span><span><i style="background:var(--ok-bg)"></i>Pagado</span><span><i style="background:var(--stub);border-radius:50%"></i>Precio especial</span><span><b class="fx-l">F</b>Número fijo</span></div>`;
+  return h;
+}
+function gridHtml(r) {
+  const q = norm(S.q); let out = "", count = 0;
+  for (const k of r.lista) {
+    const st = estado(r, k); const n = r.nums[k];
+    if (S.filtro === "fijo" ? !(n && n.p && n.fijo) : (S.filtro !== "todos" && st !== S.filtro)) continue;
+    if (q && !(k.includes(q) || (n && n.p && norm(n.p).includes(q)))) continue;
+    count++;
+    const name = n && n.p ? n.p.trim().split(" ")[0] : "libre";
+    const sel = S.sel && S.sel.has(k) ? " sel" : "";
+    out += `<button class="cell ${st}${sel}" data-a="num" data-k="${esc(k)}" aria-label="Número ${esc(k)}, ${st}${n && n.fijo ? ", fijo" : ""}">${n && n.pr != null && n.pr !== r.precio ? `<span class="tag"></span>` : ""}${n && n.p && n.fijo ? `<span class="fx">F</span>` : ""}<b>${esc(k)}</b><small>${esc(name)}</small></button>`;
+  }
+  return count ? out : `<p class="muted" style="grid-column:1/-1;text-align:center">Ningún número coincide.</p>`;
+}
+
+function tPersonas(r) {
+  const ps = personas(r); const q = norm(S.qp);
+  let h = `<div class="search"><input id="q-p" type="search" placeholder="Buscar persona" value="${esc(S.qp)}" autocomplete="off"></div>`;
+  if (!ps.length) return h + `<div class="empty"><h2>Aún no hay compradores</h2><p>Toca un número en la pestaña Números para asignarle una persona, o usa "Elegir varios" para venderle un paquete.</p></div>`;
+  const vis = ps.filter(p => !q || norm(p.nombre).includes(q) || (p.tel || "").includes(q));
+  h += `<div class="list">`;
+  for (const p of vis) {
+    const debe = Math.max(0, p.total - p.pagado);
+    h += `<button class="li" data-a="persona" data-key="${esc(p.key)}"><div class="avatar">${esc(p.nombre.charAt(0).toUpperCase())}</div>
+      <div class="grow"><div class="t">${esc(p.nombre)}</div><div class="s mono">${p.nums.map(esc).join(" · ")}</div></div>
+      <div class="r"><div class="${debe ? "warn-t" : "ok-t"}" style="font-weight:600">${debe ? fmt(debe) : "Pagado"}</div><div class="s">de ${fmt(p.total)}</div></div></button>`;
+  }
+  if (!vis.length) h += `<div class="li"><div class="grow muted">Nadie coincide con la búsqueda.</div></div>`;
+  return h + `</div>`;
+}
+
+function todosAbonos(r) {
+  const out = [];
+  for (const k of r.lista) { const n = r.nums[k]; if (!n || !n.ab) continue; n.ab.forEach((a, i) => out.push({ k, i, p: n.p || "", m: a.m, f: a.f || "", n: a.n || "" })); }
+  return out.sort((a, b) => (b.f).localeCompare(a.f) || a.p.localeCompare(b.p));
+}
+function tAbonos(r) {
+  const ab = todosAbonos(r);
+  if (!ab.length) return `<div class="empty"><h2>Sin abonos todavía</h2><p>Cuando registres un pago en un número o a una persona aparecerá aquí, ordenado por fecha.</p></div>`;
+  const total = ab.reduce((s, a) => s + a.m, 0);
+  let h = `<div class="card" style="display:flex;justify-content:space-between;align-items:center"><span class="muted">${ab.length} abonos registrados</span><b class="num" style="font-size:18px">${fmt(total)}</b></div><div class="list">`;
+  let dia = null;
+  const porDia = {}; ab.forEach(a => porDia[a.f] = (porDia[a.f] || 0) + a.m);
+  for (const a of ab) {
+    if (a.f !== dia) { dia = a.f; h += `<div class="day"><span>${esc(fmtFecha(a.f) || "Sin fecha")}</span><span class="num">${fmt(porDia[a.f])}</span></div>`; }
+    h += `<button class="li" data-a="num" data-k="${esc(a.k)}"><span class="numchip ${estado(r, a.k)}">${esc(a.k)}</span>
+      <div class="grow"><div class="t">${esc(a.p || "(sin persona)")}</div>${a.n ? `<div class="s">${esc(a.n)}</div>` : ""}</div>
+      <div class="r ok-t" style="font-weight:600">+${fmt(a.m)}</div></button>`;
+  }
+  return h + `</div>`;
+}
+
+function tHistorial(r) {
+  if (!r.historial.length) return `<div class="empty"><h2>Sin sorteos cerrados</h2><p>Cuando cierres la ${esc(frec(r).nombre.toLowerCase())} con el botón de arriba, aquí quedará guardada con su ganador y lo que te quedaron debiendo.</p></div>`;
+  let h = `<div class="list">`;
+  r.historial.forEach((c, i) => {
+    const t = totalesCiclo(c);
+    h += `<button class="li" data-a="ciclo-ver" data-i="${i}"><div class="avatar" style="color:var(--stub-ink);background:var(--stub);border:0">${c.n}</div>
+      <div class="grow"><div class="t">${esc(nombreCiclo(r, c.n))}${c.fecha ? " · " + esc(fmtFecha(c.fecha)) : ""}</div>
+      <div class="s">${c.ganador ? "Ganó el " + esc(c.ganador) + (c.ganadorP ? " (" + esc(c.ganadorP) + ")" : "") : "Sin ganador anotado"} · ${t.vend} vendidos</div></div>
+      <div class="r"><div class="${t.pend ? "warn-t" : "ok-t"}" style="font-weight:600">${t.pend ? fmt(t.pend) : "Al día"}</div><div class="s">${t.pend ? t.deudores + " deben" : fmt(t.rec)}</div></div></button>`;
+  });
+  return h + `</div>`;
+}
+
+function shCerrar() {
+  const r = cur(); const s = resumen(r); const f = frec(r); const sig = nombreCiclo(r, r.ciclo.n + 1);
+  const fijos = r.lista.filter(k => r.nums[k] && r.nums[k].p && r.nums[k].fijo);
+  return head(r.nombre, "Cerrar " + esc(nombreCiclo(r))) + `
+    <div class="stats3"><div><span>Vendidos</span><b>${s.vend}</b></div><div><span>Recaudado</span><b class="ok-t">${fmt(s.rec)}</b></div><div><span>Pendiente</span><b class="${s.pend ? "warn-t" : "ok-t"}">${fmt(s.pend)}</b></div></div>
+    ${s.pend ? `<p class="muted" style="margin-top:0">${s.debe} ${s.debe === 1 ? "número queda" : "números quedan"} debiendo ${fmt(s.pend)}. Esa deuda se guarda en el Historial para que la sigas cobrando.</p>` : ""}
+    <div class="form">
+      <div class="two"><label>Número ganador<input id="cc-gan" inputmode="numeric" placeholder="Opcional" autocomplete="off"></label>
+      <label>Fecha del próximo sorteo<input id="cc-fecha" type="date" value="${esc(sumarCiclo(r.fecha || hoy(), r))}"></label></div>
+      <div id="cc-gan-quien" class="hint"></div>
+      <div class="card" style="margin:0"><b>${esc(sig)}</b><p class="muted" style="margin:6px 0 0">${fijos.length
+        ? `Los ${fijos.length} números fijos (${fijos.map(esc).join(", ")}) pasan a la ${esc(sig.toLowerCase())} con el mismo comprador y precio, sin abonos. Los demás quedan libres.`
+        : "No tienes números fijos: todos los números quedan libres para vender."}</p></div>
+      <button class="btn primary" data-a="cerrar-ok" data-confirm="Toca otra vez para confirmar">Cerrar y empezar ${esc(sig.toLowerCase())}</button>
+    </div>`;
+}
+function shCiclo(i) {
+  const r = cur(); const c = r.historial[i]; if (!c) return null; const t = totalesCiclo(c);
+  const keys = Object.keys(c.nums).sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+  const deben = keys.filter(k => pagadoDe(c.nums[k]) < c.nums[k].pr);
+  let h = head(r.nombre, esc(nombreCiclo(r, c.n)));
+  h += `<div class="stats3"><div><span>Vendido</span><b>${fmt(t.esp)}</b></div><div><span>Recaudado</span><b class="ok-t">${fmt(t.rec)}</b></div><div><span>Pendiente</span><b class="${t.pend ? "warn-t" : "ok-t"}">${fmt(t.pend)}</b></div></div>`;
+  h += `<p class="muted" style="margin-top:0">${c.fecha ? "Sorteo del " + esc(fmtFecha(c.fecha)) + ". " : ""}${c.ganador ? "Ganó el número <b class='mono'>" + esc(c.ganador) + "</b>" + (c.ganadorP ? " (" + esc(c.ganadorP) + ")" : "") + "." : ""} Cerrado el ${esc(fmtFecha(c.cierre))}.</p>`;
+  if (deben.length) {
+    h += `<div class="section-t">Quedaron debiendo · ${deben.length}</div><div class="list" style="margin-bottom:12px">` + deben.map(k => {
+      const n = c.nums[k]; const d = n.pr - pagadoDe(n);
+      return `<div class="li"><span class="numchip debe">${esc(k)}</span><div class="grow"><div class="t">${esc(n.p)}</div><div class="s">Debe ${fmt(d)} de ${fmt(n.pr)}</div></div>
+        <button class="btn" style="min-height:36px;padding:6px 12px" data-a="ciclo-cobrar" data-i="${i}" data-k="${esc(k)}" data-confirm="¿Pagó ${esc(fmt(d))}?">Cobrado</button></div>`;
+    }).join("") + `</div>`;
+  } else h += `<div class="banner" style="background:var(--ok-bg);color:var(--ok)">Todo cobrado en este sorteo.</div>`;
+  const pagaron = keys.filter(k => !deben.includes(k));
+  if (pagaron.length) h += `<div class="section-t">Pagaron · ${pagaron.length}</div><div class="numchips">${pagaron.map(k => `<span class="numchip pagado">${esc(k)}</span>`).join("")}</div>`;
+  return h;
+}
+
+function tAjustes(r) {
+  return `<div class="card"><h3>Datos de la rifa</h3><div class="form">
+    <label>Nombre<input id="aj-nombre" value="${esc(r.nombre)}"></label>
+    <label>Premio<input id="aj-premio" value="${esc(r.premio)}" placeholder="Ej. Moto, mercado, $500.000"></label>
+    <div class="two"><label>Fecha del sorteo<input id="aj-fecha" type="date" value="${esc(r.fecha)}"></label>
+    <label>Precio base por número<input id="aj-precio" inputmode="numeric" value="${fmtNum(r.precio)}"></label></div>
+    <label>Cada cuánto se juega<select id="aj-frec">${frecOpts(r.frecuencia)}</select></label>
+    <span class="hint">Cambiar el precio base afecta a los números que no tienen precio especial.</span>
+    <button class="btn primary" data-a="aj-save">Guardar cambios</button></div></div>
+  <div class="card"><h3>Agregar números</h3><div class="form">
+    <div class="two"><label>Desde<input id="aj-desde" inputmode="numeric" placeholder="100"></label><label>Hasta<input id="aj-hasta" inputmode="numeric" placeholder="199"></label></div>
+    <span class="hint">Los ceros a la izquierda se respetan: 000 a 999 crea números de 3 cifras. Los que ya existan no se duplican.</span>
+    <button class="btn" data-a="aj-rango">Agregar rango</button>
+    <button class="btn" data-a="importar-aqui">Subir Excel a esta rifa</button></div></div>
+  <div class="card"><h3>Eliminar rifa</h3><p class="muted" style="margin:0 0 12px">Se borran todos sus números, personas y abonos. No se puede deshacer.</p>
+    <button class="btn danger block" data-a="eliminar" data-confirm="Toca otra vez para eliminar">Eliminar esta rifa</button></div>`;
+}
+
+function renderSelbar() {
+  const root = $("#selbar-root");
+  if (S.view !== "rifa" || !S.sel || S.tab !== "numeros") { root.innerHTML = ""; return; }
+  const n = S.sel.size;
+  root.innerHTML = `<div class="selbar"><div class="in"><span>${n} ${n === 1 ? "número" : "números"}</span>
+    <button class="btn ghost" data-a="sel-clear">Limpiar</button>
+    <button class="btn stub" data-a="asignar" ${n ? "" : "disabled"}>Asignar</button></div></div>`;
+}
+
+/* ---------- hojas ---------- */
+function openSheet(html) { $("#sheet-root").innerHTML = `<div class="scrim" data-a="scrim"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${html}</div></div>`; }
+function closeSheet() { $("#sheet-root").innerHTML = ""; }
+const pill = st => `<span class="pill ${st}">${{ libre: "Libre", debe: "Con saldo", pagado: "Pagado" }[st]}</span>`;
+const head = (eyebrow, title, extra = "") => `<div class="sh-head"><div class="grow"><div class="eyebrow">${esc(eyebrow)}</div><h2>${title}</h2></div>${extra}<button class="icon" data-a="close" aria-label="Cerrar">×</button></div>`;
+
+function shNumero(k) {
+  const r = cur(); const n = r.nums[k] || {}; const st = estado(r, k);
+  const pr = precioDe(r, k), pg = pagadoDe(n), saldo = Math.max(0, pr - pg);
+  let h = head(r.nombre, `Número <span class="mono">${esc(k)}</span>`, pill(st));
+  h += `<div class="form">
+    <label>Persona<input id="n-p" list="dl-p" value="${esc(n.p || "")}" placeholder="Nombre de quien compró" autocomplete="off"></label>
+    <div class="two"><label>Teléfono<input id="n-t" inputmode="tel" value="${esc(n.t || "")}"></label>
+    <label>Precio<input id="n-pr" inputmode="numeric" value="${n.pr != null ? fmtNum(n.pr) : ""}" placeholder="${fmtNum(r.precio)}"></label></div>
+    <span class="hint">Deja el precio vacío para usar el precio base (${fmt(r.precio)}).</span>
+    <label>Notas<input id="n-nt" value="${esc(n.nt || "")}" placeholder="Opcional"></label>
+    <label class="check"><input type="checkbox" id="n-fijo" ${n.fijo ? "checked" : ""}> Número fijo: lo conserva cada ${esc(frec(r).nombre.toLowerCase())}</label>
+    <button class="btn primary" data-a="num-save" data-k="${esc(k)}">Guardar</button></div>`;
+  if (n.p) {
+    h += `<div class="section-t">Abonos</div>
+    <div class="stats3"><div><span>Precio</span><b>${fmt(pr)}</b></div><div><span>Abonado</span><b class="ok-t">${fmt(pg)}</b></div><div><span>Saldo</span><b class="${saldo ? "warn-t" : "ok-t"}">${fmt(saldo)}</b></div></div>`;
+    if (n.ab && n.ab.length) {
+      h += `<div class="list" style="margin-bottom:12px">${n.ab.map((a, i) => `<div class="li"><div class="grow"><div class="t num">${fmt(a.m)}</div><div class="s">${esc(fmtFecha(a.f))}${a.n ? " · " + esc(a.n) : ""}</div></div>
+        <button class="xdel" data-a="ab-del" data-k="${esc(k)}" data-i="${i}" data-confirm="¿Borrar?">Borrar</button></div>`).join("")}</div>`;
+    }
+    h += `<div class="card"><div class="form">
+      <div class="two"><label>Monto<input id="a-m" inputmode="numeric" value="${saldo ? fmtNum(saldo) : ""}"></label><label>Fecha<input id="a-f" type="date" value="${hoy()}"></label></div>
+      <label>Nota<input id="a-n" placeholder="Ej. Nequi, efectivo"></label>
+      <button class="btn primary" data-a="ab-add" data-k="${esc(k)}">Registrar abono</button></div></div>
+    <button class="btn danger block" data-a="liberar" data-k="${esc(k)}" data-confirm="Toca otra vez para liberar">Liberar número</button>
+    <p class="hint" style="text-align:center">Liberar quita a la persona y borra sus abonos de este número.</p>`;
+  }
+  return h;
+}
+
+function shPersona(key) {
+  const r = cur(); const p = personas(r).find(x => x.key === key);
+  if (!p) return null;
+  const debe = Math.max(0, p.total - p.pagado);
+  let h = head(r.nombre, esc(p.nombre));
+  h += `<div class="stats3"><div><span>Total</span><b>${fmt(p.total)}</b></div><div><span>Abonado</span><b class="ok-t">${fmt(p.pagado)}</b></div><div><span>Saldo</span><b class="${debe ? "warn-t" : "ok-t"}">${fmt(debe)}</b></div></div>`;
+  if (p.tel) h += `<p style="margin:0 0 12px">Teléfono: <span class="mono" style="user-select:all">${esc(p.tel)}</span></p>`;
+  const dAnt = deudaAnterior(r, key);
+  if (dAnt) h += `<div class="banner" style="margin:0 0 12px">También debe ${fmt(dAnt)} de sorteos pasados. Cóbralo desde la pestaña Historial.</div>`;
+  const fijosP = p.nums.filter(k => r.nums[k].fijo);
+  if (fijosP.length) h += `<p class="hint" style="margin:0 0 10px"><b class="fx-l">F</b>Números fijos: ${fijosP.map(esc).join(", ")}</p>`;
+  h += `<div class="section-t">${p.nums.length} ${p.nums.length === 1 ? "número" : "números"}</div><div class="numchips" style="margin-bottom:14px">${p.nums.map(k => `<button class="numchip ${estado(r, k)}" data-a="num" data-k="${esc(k)}">${esc(k)} · ${fmt(precioDe(r, k))}</button>`).join("")}</div>`;
+  h += `<div class="card"><h3>Registrar abono</h3><div class="form">
+    <div class="two"><label>Monto<input id="pa-m" inputmode="numeric" value="${debe ? fmtNum(debe) : ""}"></label><label>Fecha<input id="pa-f" type="date" value="${hoy()}"></label></div>
+    <label>Nota<input id="pa-n" placeholder="Ej. Nequi, efectivo"></label>
+    <span class="hint">El abono se reparte entre sus números, empezando por el primero que tenga saldo.</span>
+    <button class="btn primary" data-a="pa-add" data-key="${esc(key)}">Registrar abono</button></div></div>`;
+  h += `<div class="card"><h3>Precio especial por paquete</h3><div class="form">
+    <div class="two"><label>Precio por número<input id="pp-u" inputmode="numeric" placeholder="${fmtNum(r.precio)}"></label><label>Total del paquete<input id="pp-t" inputmode="numeric" placeholder="${fmtNum(p.total)}"></label></div>
+    <button class="btn" data-a="pp-save" data-key="${esc(key)}">Aplicar a sus ${p.nums.length} números</button></div></div>`;
+  h += `<div class="card"><h3>Datos de contacto</h3><div class="form">
+    <label>Nombre<input id="pe-p" value="${esc(p.nombre)}"></label>
+    <label>Teléfono<input id="pe-t" inputmode="tel" value="${esc(p.tel)}"></label>
+    <button class="btn" data-a="pe-save" data-key="${esc(key)}">Guardar en todos sus números</button></div></div>`;
+  h += `<button class="btn block" data-a="pmsg" data-key="${esc(key)}">Copiar mensaje de cobro</button><textarea id="pmsg-box" rows="5" hidden style="margin-top:10px"></textarea>`;
+  return h;
+}
+
+function shAsignar() {
+  const r = cur(); const keys = r.lista.filter(k => S.sel.has(k));
+  const ocupados = keys.filter(k => r.nums[k] && r.nums[k].p);
+  let h = head(r.nombre, `Asignar ${keys.length} ${keys.length === 1 ? "número" : "números"}`);
+  h += `<div class="numchips" style="margin-bottom:12px">${keys.map(k => `<span class="numchip ${estado(r, k)}">${esc(k)}</span>`).join("")}</div>`;
+  if (ocupados.length) h += `<div class="banner" style="margin:0 0 12px">${ocupados.length} ya ${ocupados.length === 1 ? "tiene" : "tienen"} comprador. Se reasignarán a esta persona y conservarán sus abonos.</div>`;
+  h += `<div class="form">
+    <label>Persona<input id="as-p" list="dl-p" placeholder="Nombre" autocomplete="off"></label>
+    <label>Teléfono<input id="as-t" inputmode="tel"></label>
+    <div class="two"><label>Precio por número<input id="as-u" inputmode="numeric" value="${fmtNum(r.precio)}"></label><label>Total del paquete<input id="as-tot" inputmode="numeric" value="${fmtNum(r.precio * keys.length)}"></label></div>
+    <span class="hint">Cambia cualquiera de los dos para dar precio por paquete. Precio base: ${fmt(r.precio)}.</span>
+    <div class="two"><label>Abono inicial<input id="as-ab" inputmode="numeric" placeholder="0"></label><label>Fecha<input id="as-f" type="date" value="${hoy()}"></label></div>
+    <label class="check"><input type="checkbox" id="as-fijo"> Números fijos: los conserva cada ${esc(frec(r).nombre.toLowerCase())}</label>
+    <button class="btn primary" data-a="asignar-ok">Asignar</button></div>`;
+  return h;
+}
+
+function shNueva() {
+  return head("Nueva rifa", "Crear rifa") + `<div class="form">
+    <label>Nombre<input id="nr-nombre" placeholder="Ej. Rifa de diciembre"></label>
+    <label>Premio<input id="nr-premio" placeholder="Opcional"></label>
+    <div class="two"><label>Precio por número<input id="nr-precio" inputmode="numeric" placeholder="10.000"></label><label>Fecha del sorteo<input id="nr-fecha" type="date"></label></div>
+    <label>Cada cuánto se juega<select id="nr-frec">${frecOpts("semanal")}</select></label>
+    <div class="two"><label>Desde<input id="nr-desde" inputmode="numeric" value="00"></label><label>Hasta<input id="nr-hasta" inputmode="numeric" value="99"></label></div>
+    <span class="hint">00 a 99 crea 100 números de dos cifras; 000 a 999 crea 1.000.</span>
+    <button class="btn primary" data-a="nueva-ok">Crear rifa</button>
+    <button class="btn" data-a="importar">Prefiero subir un Excel</button></div>`;
+}
+
+/* ---------- importación de Excel ---------- */
+const IMP = { wb: null, sheet: null, rows: [], file: "", destino: "nueva" };
+const CAMPOS = [["num", "Número *"], ["p", "Persona"], ["t", "Teléfono"], ["pr", "Precio"], ["ab", "Abonado"], ["nt", "Notas"]];
+const PAT = { num: /^(n(u|ú)m(ero)?s?|no\.?|#|n°|nro|boleta|ticket|puesto)/i, p: /(nombre|persona|cliente|comprador|due(n|ñ)o)/i, t: /(tel|cel|whats|m(o|ó)vil|contacto)/i, pr: /(precio|valor|costo)/i, ab: /(abon|pag|cancel)/i, nt: /(nota|obs|coment)/i };
+function shImportar(destino) {
+  IMP.destino = destino || "nueva"; IMP.wb = null; IMP.rows = [];
+  if (!window.XLSX) return head("Importar", "Subir Excel") + `<div class="banner">No se pudo cargar el lector de Excel. Revisa tu conexión y vuelve a abrir la app.</div>`;
+  return head("Importar", "Subir Excel") + `<p class="muted" style="margin-top:0">Sube un archivo .xlsx, .xls o .csv. Debe tener una columna con los números; si también trae nombre, teléfono, precio o lo abonado, lo leemos.</p>
+    <label class="btn primary block" for="imp-file" style="cursor:pointer">Elegir archivo</label>
+    <input id="imp-file" type="file" accept=".xlsx,.xls,.csv,.ods" hidden>
+    <div id="imp-step"></div>`;
+}
+async function leerArchivo(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    IMP.wb = XLSX.read(buf, { type: "array" }); IMP.file = file.name.replace(/\.[^.]+$/, "");
+    IMP.sheet = IMP.wb.SheetNames.find(n => { const ws = IMP.wb.Sheets[n]; return ws && ws["!ref"]; }) || IMP.wb.SheetNames[0];
+    cargarHoja(); pasoMapeo();
+  } catch (e) { $("#imp-step").innerHTML = `<div class="banner">No se pudo leer ese archivo. Prueba guardarlo como .xlsx o .csv.</div>`; }
+}
+function cargarHoja() {
+  const ws = IMP.wb.Sheets[IMP.sheet];
+  IMP.rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: false, blankrows: false }).map(r => r.map(c => String(c).trim()));
+  const first = IMP.rows[0] || [];
+  IMP.header = first.some(c => c && !/^\d+$/.test(c) && Object.values(PAT).some(p => p.test(c)));
+  detectarMapa();
+}
+function detectarMapa() {
+  const first = IMP.rows[0] || []; const ncol = Math.max(0, ...IMP.rows.slice(0, 50).map(r => r.length));
+  const m = { num: -1, p: -1, t: -1, pr: -1, ab: -1, nt: -1 };
+  if (IMP.header) {
+    for (const f of Object.keys(m)) m[f] = first.findIndex((c, i) => PAT[f].test(c) && !Object.values(m).includes(i));
+    if (m.num < 0) m.num = 0;
+  } else {
+    m.num = 0; if (ncol > 1) m.p = 1; if (ncol > 2) m.t = 2;
+  }
+  IMP.map = m; IMP.ncol = ncol;
+}
+const colName = i => { let s = "", n = i + 1; while (n) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; };
+function datosImport() {
+  const rows = IMP.header ? IMP.rows.slice(1) : IMP.rows; const m = IMP.map;
+  const out = [];
+  for (const row of rows) {
+    const num = String(row[m.num] ?? "").trim(); if (!num) continue;
+    out.push({ num, p: m.p >= 0 ? row[m.p] || "" : "", t: m.t >= 0 ? row[m.t] || "" : "", pr: m.pr >= 0 ? parseMoney(row[m.pr]) : NaN, ab: m.ab >= 0 ? parseMoney(row[m.ab]) : NaN, nt: m.nt >= 0 ? row[m.nt] || "" : "" });
+  }
+  const allNum = out.length && out.every(o => /^\d+$/.test(o.num));
+  const w = allNum ? Math.max(...out.map(o => o.num.length)) : 0;
+  const pad = allNum && out.some(o => o.num.length < w);
+  return { out, w, pad };
+}
+function pasoMapeo() {
+  const step = $("#imp-step"); if (!step) return;
+  const first = IMP.rows[0] || [];
+  const opts = sel => `<option value="-1">— no usar —</option>` + Array.from({ length: IMP.ncol }, (_, i) => `<option value="${i}" ${sel === i ? "selected" : ""}>${esc(IMP.header && first[i] ? first[i] : "Columna " + colName(i))}</option>`).join("");
+  const d = datosImport();
+  const rifas = Object.values(S.rifas);
+  let h = `<div class="section-t">Archivo: ${esc(IMP.file)}</div><div class="form">`;
+  if (IMP.wb.SheetNames.length > 1) h += `<label>Hoja<select id="imp-sheet">${IMP.wb.SheetNames.map(n => `<option ${n === IMP.sheet ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>`;
+  h += `<label class="check"><input type="checkbox" id="imp-head" ${IMP.header ? "checked" : ""}> La primera fila son títulos</label>`;
+  h += `<div class="two">${CAMPOS.map(([f, l]) => `<label>${l}<select id="imp-c-${f}" data-f="${f}">${opts(IMP.map[f])}</select></label>`).join("")}</div>`;
+  if (d.pad) h += `<label class="check"><input type="checkbox" id="imp-pad" checked> Completar con ceros a ${d.w} cifras (7 → ${"7".padStart(d.w, "0")})</label>`;
+  h += `<div class="section-t">Vista previa · ${d.out.length} filas con número</div>
+    <div class="tablewrap"><table><thead><tr><th>Número</th><th>Persona</th><th>Teléfono</th><th>Precio</th><th>Abonado</th></tr></thead><tbody>
+    ${d.out.slice(0, 6).map(o => `<tr><td class="mono">${esc(o.num)}</td><td>${esc(o.p)}</td><td>${esc(o.t)}</td><td>${isNaN(o.pr) ? "" : fmt(o.pr)}</td><td>${isNaN(o.ab) ? "" : fmt(o.ab)}</td></tr>`).join("")}
+    </tbody></table></div>`;
+  h += `<label>Guardar en<select id="imp-dest"><option value="nueva">Una rifa nueva</option>${rifas.map(r => `<option value="${esc(r.id)}" ${IMP.destino === r.id ? "selected" : ""}>${esc(r.nombre)}</option>`).join("")}</select></label>
+    <div id="imp-nueva" ${IMP.destino === "nueva" ? "" : "hidden"}><div class="two"><label>Nombre de la rifa<input id="imp-nombre" value="${esc(IMP.file)}"></label><label>Precio base<input id="imp-precio" inputmode="numeric" placeholder="10.000"></label></div></div>
+    <button class="btn primary" data-a="imp-ok" ${d.out.length ? "" : "disabled"}>Importar ${d.out.length} números</button></div>`;
+  step.innerHTML = h;
+}
+function aplicarImport(out, o) {
+  let r;
+  if (o.dest === "nueva") {
+    let pr0 = o.precio;
+    if (isNaN(pr0)) { const prs = out.map(x => x.pr).filter(x => !isNaN(x)); pr0 = prs.length ? prs.sort((a, b) => prs.filter(v => v === a).length - prs.filter(v => v === b).length).pop() : 0; }
+    r = nuevaRifa({ nombre: o.nombre, precio: pr0 || 0, fecha: o.fecha || "" });
+  } else r = clone(S.rifas[o.dest]);
+  const set = new Set(r.lista); let conP = 0;
+  for (const x of out) {
+    const k = o.pad ? x.num.padStart(o.w, "0") : x.num;
+    if (!set.has(k)) { set.add(k); r.lista.push(k); }
+    if (x.p) {
+      conP++;
+      const n = r.nums[k] || { ab: [] };
+      n.p = x.p; if (x.t) n.t = x.t; if (x.nt) n.nt = x.nt;
+      if (!isNaN(x.pr) && x.pr !== r.precio) n.pr = x.pr;
+      if (!isNaN(x.ab) && x.ab > 0 && pagadoDe(n) < x.ab) { n.ab = n.ab || []; n.ab.push({ m: x.ab - pagadoDe(n), f: hoy(), n: "Importado de Excel" }); }
+      r.nums[k] = n;
+    }
+  }
+  sortLista(r.lista);
+  return { r, conP };
+}
+function terminarImport(r, total, conP) {
+  Store.save(r); closeSheet();
+  S.rifaId = r.id; S.view = "rifa"; S.tab = "numeros"; S.filtro = "todos"; S.q = ""; S.sel = null; render(); window.scrollTo(0, 0);
+  toast(`Importados ${total} números${conP ? `, ${conP} con comprador` : ""}`);
+}
+function importar() {
+  const d = datosImport(); const pad = $("#imp-pad") ? $("#imp-pad").checked : false;
+  const { r, conP } = aplicarImport(d.out, { dest: $("#imp-dest").value, nombre: $("#imp-nombre").value.trim() || IMP.file, precio: parseMoney($("#imp-precio").value), pad, w: d.w });
+  terminarImport(r, d.out.length, conP);
+}
+
+/* ---------- exportar ---------- */
+async function exportar() {
+  const r = cur(); if (!window.XLSX) { toast("No se pudo cargar el módulo de Excel"); return; }
+  const rows = [["Número", "Persona", "Teléfono", "Precio", "Abonado", "Saldo", "Estado", "Notas"]];
+  for (const k of r.lista) { const n = r.nums[k] || {}; const st = estado(r, k); const pr = precioDe(r, k), pg = pagadoDe(n);
+    rows.push([k, n.p || "", n.t || "", n.p ? pr : r.precio, pg, n.p ? Math.max(0, pr - pg) : "", { libre: "Libre", debe: "Con saldo", pagado: "Pagado" }[st], n.nt || ""]); }
+  const ab = [["Fecha", "Número", "Persona", "Monto", "Nota"], ...todosAbonos(r).map(a => [a.f, a.k, a.p, a.m, a.n])];
+  const s = resumen(r);
+  rows[0].push("Fijo"); rows.forEach((row, i) => { if (i) row.push(r.nums[row[0]] && r.nums[row[0]].fijo ? "Sí" : ""); });
+  const hist = [["Sorteo", "Fecha sorteo", "Ganador", "Dueño del ganador", "Vendido", "Recaudado", "Pendiente"], ...r.historial.map(c => { const t = totalesCiclo(c); return [nombreCiclo(r, c.n), c.fecha, c.ganador, c.ganadorP, t.esp, t.rec, t.pend]; })];
+  const res = [["Rifa", r.nombre], ["Sorteo actual", nombreCiclo(r)], ["Se juega", frec(r).label], ["Deben de sorteos pasados", resumen(r).pendAnt], ["Premio", r.premio], ["Fecha sorteo", r.fecha], ["Precio base", r.precio], ["Números", s.total], ["Vendidos", s.vend], ["Total vendido", s.esp], ["Recaudado", s.rec], ["Falta por recaudar", s.pend], ["Si se vende todo", s.pot]];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(res), "Resumen");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Números");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ab), "Abonos");
+  if (r.historial.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hist), "Historial");
+  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  try { descargar(nombreArchivo(r.nombre) + ".xlsx", new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })); toast("Excel descargado"); }
+  catch (e) { toast("No se pudo descargar el Excel"); }
+}
+
+/* ---------- ejemplo ---------- */
+function crearEjemplo() {
+  const r = nuevaRifa({ nombre: "Rifa de ejemplo", premio: "Ejemplo: televisor 50\"", fecha: "2026-12-20", precio: 10000, lista: rango("00", "99") });
+  const gente = [["Ana (ejemplo)", "300 000 0001", ["07", "13", "21", "77", "88"], 8000, 40000], ["Luis (ejemplo)", "300 000 0002", ["03"], null, 5000],
+    ["Marta (ejemplo)", "300 000 0003", ["10", "11", "12"], 9000, 27000], ["Pedro (ejemplo)", "300 000 0004", ["45", "54"], null, 0], ["Sofía (ejemplo)", "", ["99"], null, 10000]];
+  for (const [p, t, nums, pr, ab] of gente) { nums.forEach(k => r.nums[k] = { p, t, pr, ab: [], fijo: p.startsWith("Ana") }); if (ab) repartirAbono(r, nums, ab, hoy(), "Efectivo"); }
+  Store.save(r); S.rifaId = r.id; S.view = "rifa"; S.tab = "numeros"; render();
+}
+
+/* ---------- eventos ---------- */
+function armado(el) {
+  if (!el.dataset.confirm || el.dataset.armed) return true;
+  el.dataset.armed = "1"; const prev = el.textContent; el.textContent = el.dataset.confirm;
+  setTimeout(() => { if (el.isConnected) { delete el.dataset.armed; el.textContent = prev; } }, 3000);
+  return false;
+}
+const val = id => { const e = document.getElementById(id); return e ? e.value : ""; };
+
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-a]"); if (!el) return;
+  const a = el.dataset.a;
+  if (a === "scrim") { if (e.target === el) closeSheet(); return; }
+  if (!armado(el)) return;
+  const r = cur();
+  switch (a) {
+    case "close": closeSheet(); break;
+    case "home": S.view = "home"; S.sel = null; render(); window.scrollTo(0, 0); break;
+    case "abrir": S.rifaId = el.dataset.id; S.view = "rifa"; S.tab = "numeros"; S.filtro = "todos"; S.q = ""; S.qp = ""; S.sel = null; render(); window.scrollTo(0, 0); break;
+    case "nueva": openSheet(shNueva()); break;
+    case "importar": openSheet(shImportar(S.view === "rifa" ? S.rifaId : "nueva")); break;
+    case "importar-aqui": openSheet(shImportar(S.rifaId)); break;
+    case "ejemplo": crearEjemplo(); break;
+    case "tab": S.tab = el.dataset.t; S.sel = null; render(); break;
+    case "filtro": S.filtro = el.dataset.f; render(); break;
+    case "sel-toggle": S.sel = S.sel ? null : new Set(); render(); break;
+    case "sel-clear": S.sel = new Set(); render(); break;
+    case "num": {
+      const k = el.dataset.k;
+      if (S.sel && !el.closest("#sheet-root")) { S.sel.has(k) ? S.sel.delete(k) : S.sel.add(k); el.classList.toggle("sel"); renderSelbar(); break; }
+      openSheet(shNumero(k)); break;
+    }
+    case "persona": { const h = shPersona(el.dataset.key); if (h) openSheet(h); break; }
+    case "asignar": if (S.sel && S.sel.size) openSheet(shAsignar()); break;
+    case "num-save": {
+      const k = el.dataset.k; const n = r.nums[k] ? clone(r.nums[k]) : { ab: [] };
+      const p = val("n-p").trim(); const prv = parseMoney(val("n-pr"));
+      if (!p) { if (pagadoDe(n) > 0) { toast("Tiene abonos. Usa Liberar número para dejarlo libre."); break; } delete r.nums[k]; }
+      else { n.p = p; n.t = val("n-t").trim(); n.nt = val("n-nt").trim(); n.pr = isNaN(prv) || prv === r.precio ? null : prv; n.fijo = $("#n-fijo").checked; r.nums[k] = n; }
+      Store.save(r); render(); openSheet(shNumero(k)); toast("Guardado"); break;
+    }
+    case "ab-add": {
+      const k = el.dataset.k; const m = parseMoney(val("a-m"));
+      if (!(m > 0)) { toast("Escribe un monto mayor a cero"); break; }
+      (r.nums[k].ab = r.nums[k].ab || []).push({ m, f: val("a-f") || hoy(), n: val("a-n").trim() });
+      Store.save(r); render(); openSheet(shNumero(k)); toast("Abono de " + fmt(m) + " registrado"); break;
+    }
+    case "ab-del": { const k = el.dataset.k; r.nums[k].ab.splice(+el.dataset.i, 1); Store.save(r); render(); openSheet(shNumero(k)); break; }
+    case "liberar": { delete r.nums[el.dataset.k]; Store.save(r); render(); closeSheet(); toast("Número " + el.dataset.k + " liberado"); break; }
+    case "asignar-ok": {
+      const p = val("as-p").trim(); if (!p) { toast("Escribe el nombre de la persona"); break; }
+      const keys = r.lista.filter(k => S.sel.has(k)); const t = val("as-t").trim();
+      const tot = parseMoney(val("as-tot")); let u = parseMoney(val("as-u"));
+      const prices = keys.map(() => u);
+      if (!isNaN(tot) && Math.round(tot) !== Math.round(u * keys.length)) { const base = Math.floor(tot / keys.length); keys.forEach((_, i) => prices[i] = base); prices[prices.length - 1] += tot - base * keys.length; }
+      const fijo = $("#as-fijo").checked;
+      keys.forEach((k, i) => { const n = r.nums[k] || { ab: [] }; n.p = p; if (t) n.t = t; n.pr = isNaN(prices[i]) || prices[i] === r.precio ? null : prices[i]; if (fijo) n.fijo = true; r.nums[k] = n; });
+      const ab = parseMoney(val("as-ab")); if (ab > 0) repartirAbono(r, keys, ab, val("as-f") || hoy(), "Abono inicial");
+      Store.save(r); S.sel = null; closeSheet(); render(); toast(`${keys.length} ${keys.length === 1 ? "número asignado" : "números asignados"} a ${p}`); break;
+    }
+    case "pa-add": {
+      const key = el.dataset.key; const m = parseMoney(val("pa-m")); if (!(m > 0)) { toast("Escribe un monto mayor a cero"); break; }
+      const p = personas(r).find(x => x.key === key); repartirAbono(r, p.nums, m, val("pa-f") || hoy(), val("pa-n").trim());
+      Store.save(r); render(); openSheet(shPersona(key)); toast("Abono de " + fmt(m) + " registrado"); break;
+    }
+    case "pp-save": {
+      const key = el.dataset.key; const p = personas(r).find(x => x.key === key);
+      const u = parseMoney(val("pp-u")), tot = parseMoney(val("pp-t"));
+      if (isNaN(u) && isNaN(tot)) { toast("Escribe el precio por número o el total"); break; }
+      const n = p.nums.length; const base = !isNaN(tot) ? Math.floor(tot / n) : u;
+      p.nums.forEach((k, i) => { let v = base; if (!isNaN(tot) && i === n - 1) v += tot - base * n; r.nums[k].pr = v === r.precio ? null : v; });
+      Store.save(r); render(); openSheet(shPersona(key)); toast("Precio actualizado"); break;
+    }
+    case "pe-save": {
+      const key = el.dataset.key; const p = personas(r).find(x => x.key === key); const np = val("pe-p").trim(); if (!np) { toast("El nombre no puede quedar vacío"); break; }
+      const t = val("pe-t").trim(); p.nums.forEach(k => { r.nums[k].p = np; r.nums[k].t = t; });
+      Store.save(r); render(); const h = shPersona(norm(np)); h ? openSheet(h) : closeSheet(); toast("Datos actualizados"); break;
+    }
+    case "pmsg": {
+      const p = personas(r).find(x => x.key === el.dataset.key); const debe = Math.max(0, p.total - p.pagado);
+      const txt = `Hola ${p.nombre}, te comparto el estado de tus números de "${r.nombre}"${r.fecha ? " (sorteo " + fmtFecha(r.fecha) + ")" : ""}:\n` +
+        p.nums.map(k => `• ${k}: ${fmt(precioDe(r, k))}`).join("\n") + `\nTotal: ${fmt(p.total)}\nAbonado: ${fmt(p.pagado)}\n${debe ? "Saldo pendiente: " + fmt(debe) : "¡Estás al día, gracias!"}`;
+      copiar(txt, $("#pmsg-box")); break;
+    }
+    case "nueva-ok": {
+      const lista = rango(val("nr-desde"), val("nr-hasta")); if (!lista) { toast("Revisa el rango: hasta debe ser mayor que desde (máximo 10.000 números)"); break; }
+      const precio = parseMoney(val("nr-precio"));
+      const nr = nuevaRifa({ nombre: val("nr-nombre").trim(), premio: val("nr-premio").trim(), fecha: val("nr-fecha"), precio: isNaN(precio) ? 0 : precio, lista, frecuencia: val("nr-frec") || "semanal" });
+      Store.save(nr); closeSheet(); S.rifaId = nr.id; S.view = "rifa"; S.tab = "numeros"; S.filtro = "todos"; S.q = ""; render(); window.scrollTo(0, 0); toast("Rifa creada con " + lista.length + " números"); break;
+    }
+    case "imp-ok": importar(); break;
+    case "cerrar": openSheet(shCerrar()); break;
+    case "cerrar-ok": {
+      const g = val("cc-gan").trim(); const gan = g ? (r.lista.find(k => k === g) || r.lista.find(k => /^\d+$/.test(g) && +k === +g) || g) : "";
+      const antes = nombreCiclo(r);
+      cerrarCiclo(r, gan, val("cc-fecha")); Store.save(r); closeSheet();
+      S.tab = "numeros"; S.filtro = "todos"; S.sel = null; render(); window.scrollTo(0, 0);
+      toast(`${antes} cerrada. Empezó la ${nombreCiclo(r).toLowerCase()}`); break;
+    }
+    case "ciclo-ver": { const h = shCiclo(+el.dataset.i); if (h) openSheet(h); break; }
+    case "ciclo-cobrar": {
+      const i = +el.dataset.i, k = el.dataset.k; const n = r.historial[i].nums[k]; const d = n.pr - pagadoDe(n);
+      if (d > 0) (n.ab = n.ab || []).push({ m: d, f: hoy(), n: "Pago tardío" });
+      Store.save(r); render(); openSheet(shCiclo(i)); toast(`Cobrado ${fmt(d)} del número ${k}`); break;
+    }
+    case "respaldo": openSheet(shRespaldo()); break;
+    case "respaldo-bajar": descargarRespaldo(); break;
+    case "aj-save": {
+      const precio = parseMoney(val("aj-precio"));
+      r.nombre = val("aj-nombre").trim() || r.nombre; r.premio = val("aj-premio").trim(); r.fecha = val("aj-fecha"); r.frecuencia = val("aj-frec") || r.frecuencia;
+      if (!isNaN(precio)) { r.precio = precio; for (const n of Object.values(r.nums)) if (n.pr === precio) n.pr = null; }
+      Store.save(r); render(); toast("Cambios guardados"); break;
+    }
+    case "aj-rango": {
+      const l = rango(val("aj-desde"), val("aj-hasta")); if (!l) { toast("Revisa el rango"); break; }
+      const set = new Set(r.lista); let add = 0; l.forEach(k => { if (!set.has(k)) { set.add(k); r.lista.push(k); add++; } });
+      sortLista(r.lista); Store.save(r); render(); toast(add ? `Se agregaron ${add} números` : "Esos números ya existían"); break;
+    }
+    case "eliminar": { const nombre = r.nombre; Store.remove(r.id); S.view = "home"; S.sel = null; render(); toast(`"${nombre}" eliminada`); break; }
+    case "exportar": exportar(); break;
+  }
+});
+
+document.addEventListener("input", e => {
+  const id = e.target.id;
+  if (id === "q-n") { S.q = e.target.value; const g = $("#grid"); if (g) g.innerHTML = gridHtml(cur()); }
+  else if (id === "q-p") { S.qp = e.target.value; render(); }
+  else if (id === "as-u" || id === "as-tot") {
+    const n = S.sel ? S.sel.size : 1;
+    if (id === "as-u") { const u = parseMoney(e.target.value); if (!isNaN(u)) $("#as-tot").value = fmtNum(u * n); }
+    else { const t = parseMoney(e.target.value); if (!isNaN(t) && n) $("#as-u").value = fmtNum(t / n); }
+  }
+  else if (id === "cc-gan") {
+    const r = cur(); const g = e.target.value.trim(); const k = r.lista.find(x => x === g) || r.lista.find(x => /^\d+$/.test(g) && +x === +g);
+    const n = k && r.nums[k]; $("#cc-gan-quien").textContent = !g ? "" : !k ? "Ese número no está en la rifa." : n && n.p ? `El ${k} es de ${n.p}${estado(r, k) === "debe" ? " (todavía tiene saldo pendiente)" : ""}.` : `El ${k} no se vendió esta vez.`;
+  }
+  else if (id === "n-p" || id === "as-p") {
+    const o = nombresConocidos().get(norm(e.target.value)); const tid = id === "n-p" ? "n-t" : "as-t";
+    if (o && o.t && !val(tid)) document.getElementById(tid).value = o.t;
+  }
+});
+document.addEventListener("change", e => {
+  const id = e.target.id;
+  if (id === "imp-file" && e.target.files[0]) leerArchivo(e.target.files[0]);
+  else if (id === "imp-sheet") { IMP.sheet = e.target.value; cargarHoja(); pasoMapeo(); }
+  else if (id === "imp-head") { IMP.header = e.target.checked; detectarMapa(); pasoMapeo(); }
+  else if (id.startsWith("imp-c-")) { IMP.map[e.target.dataset.f] = +e.target.value; pasoMapeo(); }
+  else if (id === "imp-dest") { IMP.destino = e.target.value; $("#imp-nueva").hidden = e.target.value !== "nueva"; }
+  else if (id === "respaldo-file" && e.target.files[0]) restaurarRespaldo(e.target.files[0]);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#sheet-root").innerHTML) closeSheet(); });
+
+Store.init();
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
