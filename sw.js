@@ -1,6 +1,6 @@
 // Guarda la app en el teléfono para que abra sin internet.
 // Cambia VERSION cada vez que publiques cambios para que los teléfonos descarguen la nueva versión.
-const VERSION = "mis-rifas-v2";
+const VERSION = "mis-rifas-v3";
 const ARCHIVOS = ["./", "index.html", "xlsx.full.min.js", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {

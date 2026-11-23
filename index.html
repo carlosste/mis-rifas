@@ -213,6 +213,7 @@ th{color:var(--muted);font-weight:600;background:var(--surface-2)}
 .selbar .btn{min-height:40px;padding:8px 14px}
 .selbar .btn.ghost{color:var(--bg);border-color:color-mix(in srgb,var(--bg) 35%,transparent)}
 
+.pasos{margin:0;padding-left:20px;display:grid;gap:8px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;z-index:60;font-size:14px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .loading{text-align:center;color:var(--muted);padding:60px 0}
 @keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
@@ -309,6 +310,43 @@ async function restaurarRespaldo(file) {
     Store.write(); closeSheet(); S.view = "home"; render(); toast(`Se restauraron ${n} ${n === 1 ? "rifa" : "rifas"}`);
   } catch (e) { toast("Ese archivo no es una copia de seguridad de Mis Rifas"); }
 }
+/* ---------- instalar en el teléfono ---------- */
+const Inst = { prompt: null };
+const instalada = () => { try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; } };
+const esIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); Inst.prompt = e; render(); });
+window.addEventListener("appinstalled", () => { Inst.prompt = null; render(); toast("App instalada. Ábrela desde el ícono Mis Rifas."); });
+function avisoInstalar() {
+  if (instalada()) return "";
+  try { if (localStorage.getItem(LKEY + "-no-instalar")) return ""; } catch (e) {}
+  return `<div class="card" style="margin-top:16px;display:flex;gap:12px;align-items:center">
+    <img src="icon-192.png" alt="" width="44" height="44" style="border-radius:10px;flex:none">
+    <div style="flex:1;min-width:0"><b>Instala Mis Rifas en tu teléfono</b><div class="hint">Queda con su ícono y funciona sin internet.</div></div>
+    <div style="display:grid;gap:6px;flex:none"><button class="btn primary" data-a="instalar" style="min-height:38px;padding:6px 12px">Instalar</button>
+    <button class="xdel" data-a="no-instalar">Ahora no</button></div></div>`;
+}
+async function instalar() {
+  if (Inst.prompt) {
+    Inst.prompt.prompt();
+    try { await Inst.prompt.userChoice; } catch (e) {}
+    Inst.prompt = null; render(); return;
+  }
+  openSheet(shInstalar());
+}
+function shInstalar() {
+  const ios = esIOS();
+  const pasosIOS = `<ol class="pasos"><li>Abre esta página en <b>Safari</b> (no en Chrome ni dentro de WhatsApp).</li>
+    <li>Toca el botón <b>Compartir</b>: el cuadrito con la flecha hacia arriba, abajo en el centro.</li>
+    <li>Baja y toca <b>"Agregar a pantalla de inicio"</b>.</li><li>Toca <b>Agregar</b>, arriba a la derecha.</li></ol>`;
+  const pasosAndroid = `<ol class="pasos"><li>Abre esta página en <b>Chrome</b>. Si la abriste desde WhatsApp, toca ⋮ → <b>"Abrir en Chrome"</b>.</li>
+    <li>Toca el menú <b>⋮</b>, arriba a la derecha.</li>
+    <li>Toca <b>"Instalar app"</b> o <b>"Agregar a la pantalla principal"</b>.</li><li>Confirma con <b>Instalar</b>.</li></ol>`;
+  return head("Mis Rifas", "Instalar en el teléfono") + `<p class="muted" style="margin-top:0">Al terminar tendrás el ícono <b>Mis Rifas</b> junto a tus otras apps. Ábrela siempre desde ahí.</p>
+    <div class="card"><h3>${ios ? "iPhone" : "Android"}</h3>${ios ? pasosIOS : pasosAndroid}</div>
+    <div class="card"><h3>${ios ? "Android" : "iPhone"}</h3>${ios ? pasosAndroid : pasosIOS}</div>
+    <p class="hint">Dirección de la app: <span class="mono" style="user-select:all">${esc(location.href.split("#")[0])}</span></p>`;
+}
+
 function diasSinRespaldo() {
   try {
     const cambios = +localStorage.getItem(LKEY + "-cambios") || 0, resp = +localStorage.getItem(LKEY + "-respaldo") || 0;
@@ -453,6 +491,7 @@ function vHome() {
       <div><b>${fmt(pendAnt)}</b><span>Deben de sorteos pasados</span></div>
     </div></div>`;
   if (S.note) h += `<div class="banner">${esc(S.note)}</div>`;
+  h += avisoInstalar();
   const dias = rifas.length ? diasSinRespaldo() : 0;
   if (dias >= 3) h += `<div class="banner" style="display:flex;gap:10px;align-items:center;justify-content:space-between"><span>Llevas ${dias} días sin copia de seguridad.</span><button class="btn" data-a="respaldo-bajar" style="min-height:36px;padding:6px 12px">Hacer copia</button></div>`;
   if (!rifas.length) {
@@ -479,7 +518,7 @@ function vHome() {
       </button>`;
     }
   }
-  h += `<p class="note">Tus rifas se guardan solo en este teléfono y funcionan sin internet.<br><button class="btn ghost" data-a="respaldo" style="margin-top:8px">Copia de seguridad</button></p>`;
+  h += `<p class="note">Tus rifas se guardan solo en este teléfono y funcionan sin internet.<br><button class="btn ghost" data-a="respaldo" style="margin-top:8px">Copia de seguridad</button>${instalada() ? "" : `<button class="btn ghost" data-a="instalar-ayuda" style="margin-top:8px">Cómo instalar</button>`}</p>`;
   return h;
 }
 
@@ -967,6 +1006,9 @@ document.addEventListener("click", e => {
       Store.save(nr); closeSheet(); S.rifaId = nr.id; S.view = "rifa"; S.tab = "numeros"; S.filtro = "todos"; S.q = ""; render(); window.scrollTo(0, 0); toast("Rifa creada con " + lista.length + " números"); break;
     }
     case "imp-ok": importar(); break;
+    case "instalar": instalar(); break;
+    case "instalar-ayuda": openSheet(shInstalar()); break;
+    case "no-instalar": try { localStorage.setItem(LKEY + "-no-instalar", "1"); } catch (e) {} render(); toast("Puedes instalarla después desde el botón de abajo"); break;
     case "cerrar": openSheet(shCerrar()); break;
     case "cerrar-ok": {
       const g = val("cc-gan").trim(); const gan = g ? (r.lista.find(k => k === g) || r.lista.find(k => /^\d+$/.test(g) && +k === +g) || g) : "";
